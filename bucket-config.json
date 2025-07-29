@@ -1,0 +1,12 @@
+[
+    {
+      "origin": [
+        "https://framework.plaisolutions.com",
+        "https://staging.framework.plaisolutions.com",
+        "http://localhost:3000"
+      ],
+      "method": ["GET", "HEAD", "PUT", "POST"],
+      "responseHeader": ["Content-Type"],
+      "maxAgeSeconds": 3600
+    }
+]

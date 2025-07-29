@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 20 14.3% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14.3% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14.3% 4.1%;
+    --primary: 159 87.9% 42.2%;
+    --primary-foreground: 26 83.3% 14.1%;
+    --secondary: 60 4.8% 95.9%;
+    --secondary-foreground: 24 9.8% 10%;
+    --muted: 60 4.8% 95.9%;
+    --muted-foreground: 25 5.3% 44.7%;
+    --muted40: 0 0% 98.4%;
+    --accent: 60 4.8% 95.9%;
+    --accent-foreground: 24 9.8% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 20 5.9% 90%;
+    --input: 20 5.9% 90%;
+    --ring: 159 87.9% 42.2%;
+    --radius: 0.5rem;
+    --chart-1: 0 0% 0%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222 47.4% 11.2%;
+    --foreground: 0 0% 100%;
+    --card: 222 47.4% 11.2%;
+    --card-foreground: 60 9.1% 97.8%;
+    --popover: 222 47.4% 11.2%;
+    --popover-foreground: 60 9.1% 97.8%;
+    --primary: 159 87.9% 42.2%;
+    --primary-foreground: 26 83.3% 14.1%;
+    --secondary: 220 33.3% 24.7%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 222 47.4% 11.2%;
+    --muted-foreground: 220 21.6% 61%;
+    --muted40: 221 50.9% 11.2%;
+    --accent: 220 21.6% 61;
+    --accent-foreground: 60 9.1% 97.8%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 227 14.3% 19.2%;
+    --input: 220 33.3% 24.7%;
+    --ring: 159 87.9% 42.2%;
+    --chart-1: 0 0% 100%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  @apply bg-secondary rounded-md;
+}
+
+* {
+  @apply border-border;
+}
+body {
+  @apply bg-background text-foreground;
+  font-feature-settings:
+    "rlig" 1,
+    "calt" 1;
+}
+.max-content {
+  button[role="combobox"] {
+    span {
+      @apply max-w-[190px] text-ellipsis overflow-hidden;
+    }
+  }
+}
+.codeblock > span,
+.codeblock > div > span  {
+  @apply rounded-xl;
+}
+
+.codeblock > span::-webkit-scrollbar-track,
+.codeblock > div > span::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.codeblock > span::-webkit-scrollbar-thumb,
+.codeblock > div > span::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/50;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
