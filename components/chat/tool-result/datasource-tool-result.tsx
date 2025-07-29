@@ -126,16 +126,24 @@ export function DatasourceToolResult({
         // Apply responsive visibility classes based on index
         if (index === 0) {
           // First card is always visible
-          return card;
+          return card
         } else if (index === 1) {
           // Second card visible only on md and up
-          return <div key={`wrapper-${index}`} className="hidden md:block">{card}</div>;
+          return (
+            <div key={`wrapper-${index}`} className="hidden md:block">
+              {card}
+            </div>
+          )
         } else if (index === 2) {
           // Third card visible only on lg and up
-          return <div key={`wrapper-${index}`} className="hidden lg:block">{card}</div>;
+          return (
+            <div key={`wrapper-${index}`} className="hidden lg:block">
+              {card}
+            </div>
+          )
         } else {
           // All other cards are hidden in the main grid
-          return null;
+          return null
         }
       })}
       {resourcesCards.length > 1 && (
@@ -150,7 +158,7 @@ export function DatasourceToolResult({
               ? t("source").toLowerCase()
               : t("sources").toLowerCase()
           }`}
-      >
+        >
           {/* Render with fullHeight false inside ToolResultSheet */}
           {Object.entries(groupedDocuments || {}).map(([resourceId, doc]) => (
             <ResourceCard
@@ -188,7 +196,7 @@ function ResourceCard({
     "flex",
     fullHeight ? "md:h-full" : "",
     "flex-col gap-2 rounded-md bg-stone-50 p-4 hover:cursor-pointer hover:bg-slate-100 mb-3",
-    className
+    className,
   ]
     .filter(Boolean)
     .join(" ")
@@ -198,7 +206,9 @@ function ResourceCard({
       <div key={resourceId} className={cardClass}>
         <div className="flex items-center gap-2 overflow-hidden">
           <FileWarning className="mr-1 size-5 shrink-0 text-red-500" />
-          <p className="line-clamp-1 break-words text-sm font-medium">{t("not_available")}</p>
+          <p className="line-clamp-1 break-words text-sm font-medium">
+            {t("not_available")}
+          </p>
         </div>
         <TruncatedText
           text={t("resource_deleted")}
@@ -221,7 +231,9 @@ function ResourceCard({
       <div className={cardClass}>
         <div className="flex max-w-full items-center gap-2 overflow-hidden">
           {getDocumentIcon({ source: doc.source })}
-          <p className="line-clamp-3 break-words text-sm font-medium">{resource.name}</p>
+          <p className="line-clamp-3 break-words text-sm font-medium">
+            {resource.name}
+          </p>
         </div>
         <TruncatedText
           text={resource.summary || doc.output}
@@ -233,7 +245,10 @@ function ResourceCard({
           <div className="flex flex-wrap gap-1">
             <span className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
               {t("pages")}:{" "}
-              {Array.from(new Set(doc.pages)).sort((a: number, b: number) => a - b).map(page => page + 1).join(", ")}
+              {Array.from(new Set(doc.pages))
+                .sort((a: number, b: number) => a - b)
+                .map((page) => page + 1)
+                .join(", ")}
             </span>
           </div>
         )}

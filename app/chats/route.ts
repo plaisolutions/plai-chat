@@ -71,5 +71,5 @@ export async function GET(req: NextRequest) {
 
   const baseUrl = process.env.NEXT_PUBLIC_PLAI_UI_URL
 
-  return NextResponse.redirect(`${baseUrl}/chats/${threadId}`)
+  return NextResponse.redirect(`${baseUrl}/chats/${decoded.id}`)
 }
