@@ -1,21 +1,49 @@
-# next-template
+# Plai UI Actua
 
-A Next.js 13 template for building apps with Radix UI and Tailwind CSS.
+A Next.js 14 application for building AI-powered chat interfaces with Radix UI and Tailwind CSS.
 
-## Usage
+## Installation
+
+First, clone the repository and install dependencies:
 
 ```bash
-npx create-next-app -e https://github.com/shadcn/next-template
+git clone <repository-url>
+cd plai-ui-actua
+npm install
+```
+
+## Development
+
+To run the project in development mode:
+
+```bash
+npm run dev
+```
+
+This will start the development server at `http://localhost:3000`.
+
+## Production
+
+To build and run the project in production mode:
+
+```bash
+# Build the project
+npm run build
+
+# Start the production server
+npm start
 ```
 
 ## Features
 
-- Next.js 13 App Directory
+- Next.js 14 App Router
 - Radix UI Primitives
 - Tailwind CSS
 - Icons from [Lucide](https://lucide.dev)
-- Dark mode with `next-themes`
-- Tailwind CSS class sorting, merging and linting.
+- Tailwind CSS class sorting, merging and linting
+- AI-powered chat interface
+- Document citation and external data source integration
+- Real-time transcription capabilities
 
 ## License
 
