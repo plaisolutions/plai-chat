@@ -1,4 +1,4 @@
-# Plai UI Actua
+# Plai Chat
 
 A Next.js 14 application for building AI-powered chat interfaces with Radix UI and Tailwind CSS.
 
@@ -8,7 +8,7 @@ First, clone the repository and install dependencies:
 
 ```bash
 git clone <repository-url>
-cd plai-ui-actua
+cd plai-chat
 npm install
 ```
 
