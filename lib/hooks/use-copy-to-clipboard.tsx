@@ -9,7 +9,7 @@ export interface useCopyToClipboardProps {
 export function useCopyToClipboard({
   timeout = 2000,
 }: useCopyToClipboardProps) {
-  const [isCopied, setIsCopied] = React.useState<boolean>(false);
+  const [isCopied, setIsCopied] = React.useState<boolean>(false)
 
   /**
    * Copies content to clipboard.
@@ -18,31 +18,31 @@ export function useCopyToClipboard({
    */
   const copyToClipboard = async (
     value: string | HTMLElement,
-    options: { html?: boolean, clean?: boolean } = {}
+    options: { html?: boolean; clean?: boolean } = {},
   ) => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return
 
-    const { html = false } = options;
+    const { html = false } = options
 
-    let textToCopy = "";
-    let htmlToCopy = "";
+    let textToCopy = ""
+    let htmlToCopy = ""
 
     if (typeof value === "string") {
-      textToCopy = value;
-      htmlToCopy = value;
+      textToCopy = value
+      htmlToCopy = value
     } else if (value instanceof HTMLElement) {
-      let node = value;
+      let node = value
       if (options.html && options.clean) {
         // Clone the node to avoid mutating the DOM
-        const clone = value.cloneNode(true) as HTMLElement;
+        const clone = value.cloneNode(true) as HTMLElement
         // Remove all <button> elements
-        clone.querySelectorAll('button').forEach(btn => btn.remove());
-        node = clone;
+        clone.querySelectorAll("button").forEach((btn) => btn.remove())
+        node = clone
       }
-      textToCopy = node.innerText;
-      htmlToCopy = node.outerHTML;
+      textToCopy = node.innerText
+      htmlToCopy = node.outerHTML
     } else {
-      return;
+      return
     }
 
     try {
@@ -51,27 +51,42 @@ export function useCopyToClipboard({
         navigator.clipboard &&
         (window.ClipboardItem || (window as any).ClipboardItem)
       ) {
-        const type = "text/html";
-        const blob = new Blob([htmlToCopy], { type });
-        const data = [new window.ClipboardItem({ [type]: blob })];
-        await navigator.clipboard.write(data);
+        const blobHtml = new Blob([htmlToCopy], { type: "text/html" })
+        const blobText = new Blob([textToCopy], { type: "text/plain" })
+        const data = [
+          new window.ClipboardItem({
+            ["text/html"]: blobHtml,
+            ["text/plain"]: blobText,
+          }),
+        ]
+        await navigator.clipboard.write(data)
       } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(textToCopy);
+        await navigator.clipboard.writeText(textToCopy)
       } else {
         // Fallback for older browsers
-        const textarea = document.createElement("textarea");
-        textarea.value = html ? htmlToCopy : textToCopy;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
+        const textarea = document.createElement("textarea")
+        textarea.value = html ? htmlToCopy : textToCopy
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textarea)
       }
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), timeout);
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), timeout)
     } catch (e) {
-      setIsCopied(false);
+      setIsCopied(false)
     }
-  };
+  }
 
-  return { isCopied, copyToClipboard };
+  /**
+   * Handles pasting content as plain text, regardless of whether HTML was copied
+   * @param event - The ClipboardEvent from paste event
+   * @returns The plain text from the clipboard
+   */
+  const handlePasteAsPlainText = (event: React.ClipboardEvent): string => {
+    // Always get plain text from clipboard data, ignoring any HTML formatting
+    return event.clipboardData.getData("text/plain")
+  }
+
+  return { isCopied, copyToClipboard, handlePasteAsPlainText }
 }

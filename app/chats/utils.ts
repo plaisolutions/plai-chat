@@ -76,6 +76,5 @@ export async function createChatSession(
   }
 
   const chatSession = (await response.json()) as NewChatSession
-  console.log("chat session created", chatSession)
   return chatSession
 }

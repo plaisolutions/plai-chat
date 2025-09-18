@@ -21,7 +21,7 @@ export function ToolResultSheet({
 }: ToolResultSheetProps) {
   // Use contentTitle if provided, otherwise fall back to title
   const finalContentTitle = contentTitle || title
-  
+
   return (
     <Sheet>
       <SheetTrigger>

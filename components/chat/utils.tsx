@@ -13,6 +13,7 @@ import type {
   ChatMessage,
   ChatSession,
   ToolCall,
+  Folder,
 } from "@/components/chat/types"
 import type { Resource } from "@/types/datasources"
 import type { APIError } from "@/lib/api"
@@ -36,6 +37,81 @@ export function getCookie(name: string): string | null {
     }
   }
   return null
+}
+
+/**
+ * Set a cookie by name (Client Side)
+ * @param name - The name of the cookie
+ * @param value - The value of the cookie
+ * @param options - Optional cookie configuration
+ * @returns void
+ */
+export function setCookie(
+  name: string,
+  value: string,
+  options: {
+    expires?: Date
+    path?: string
+    domain?: string
+    secure?: boolean
+    sameSite?: "Strict" | "Lax" | "None"
+    httpOnly?: boolean
+    maxAge?: number
+  } = {},
+) {
+  // Check if we're in a browser environment
+  if (typeof document === "undefined") {
+    return
+  }
+
+  // Set sensible defaults
+  const {
+    expires = new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+    path = "/",
+    domain = undefined,
+    secure = window.location.protocol === "https:",
+    sameSite = "Lax",
+    httpOnly = false,
+    maxAge = undefined,
+  } = options
+
+  // Build cookie string
+  let cookieString = `${name}=${encodeURIComponent(value)}`
+
+  // Add expiration
+  if (expires) {
+    cookieString += `; expires=${expires.toUTCString()}`
+  }
+
+  // Add max-age (alternative to expires, takes precedence)
+  if (maxAge) {
+    cookieString += `; max-age=${maxAge}`
+  }
+
+  // Add path
+  if (path) {
+    cookieString += `; path=${path}`
+  }
+
+  // Add domain (only if specified)
+  if (domain) {
+    cookieString += `; domain=${domain}`
+  }
+
+  // Add secure flag (only if true)
+  if (secure) {
+    cookieString += `; secure`
+  }
+
+  // Add sameSite
+  if (sameSite) {
+    cookieString += `; samesite=${sameSite}`
+  }
+
+  // Note: httpOnly cannot be set from client-side JavaScript for security reasons
+  // It can only be set from the server
+
+  document.cookie = cookieString
 }
 
 export async function getChatSession(
@@ -103,8 +179,7 @@ export async function invokeChatSessionStreaming({
   // Track document citations across chunks
   let documentCitationBuffer = ""
   let isCollectingDocumentCitation = false
-// Translation function is now passed as a parameter
-
+  // Translation function is now passed as a parameter
 
   await fetchEventSource(invokeUrl, {
     method: "POST",
@@ -508,30 +583,87 @@ export async function getDownloadUrlFromChatSession(
   return data.download_url
 }
 
-export function getDocumentIcon(document: Record<string, unknown>) {
-  const documentSource = document.source as string | undefined
-  // Source it's a url, check if it's a pdf, txt, md, webpage, etc.
-  if (documentSource?.includes(".pdf")) {
+export async function getFolderFromChatSession(
+  folderId: string,
+  chatSession: ChatSession,
+) {
+  const jwt = getCookie("chat_session_token")
+  const url = `${process.env.NEXT_PUBLIC_PLAI_API_URL}/chat_sessions/${chatSession.id}/folders/${folderId}`
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error("Folder fetch error:", errorText)
+    throw new Error(`Failed to get folder: ${response.status} ${errorText}`)
+  }
+
+  const data = (await response.json()) as Folder
+  return data
+}
+
+export function getResourceTitle(resource: Resource) {
+  if (resource.extra_info?.opengraph?.title) {
+    return resource.extra_info.opengraph.title
+  }
+  return resource.name
+}
+
+export function getResourceDescription(resource: Resource) {
+  if (resource.extra_info?.opengraph?.description) {
+    return resource.extra_info.opengraph.description
+  }
+  return resource.summary
+}
+
+export function getResourceUrl(resource: Resource) {
+  if (resource.extra_info?.opengraph?.url) {
+    return resource.extra_info.opengraph.url
+  }
+
+  if (resource.external_url) {
+    return resource.external_url
+  }
+
+  return resource.url
+}
+
+export function getDocumentIcon(resource: Resource) {
+  // first check on open graph metadata
+  if (resource.extra_info?.opengraph?.image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={resource.extra_info.opengraph.image}
+        alt="Open Graph Image"
+        className="mr-2 size-5 shrink-0"
+      />
+    )
+  }
+
+  // If resource.url is set, check if it's a pdf, txt, md, webpage, etc.
+  if (resource.url?.includes(".pdf")) {
     return <Icons.pdf className="mr-1 size-5 shrink-0 fill-red-500" />
   }
-  if (documentSource?.includes(".txt")) {
+  if (resource.url?.includes(".txt")) {
     return <File className="mr-2 size-5 shrink-0 text-blue-500" />
   }
 
-  if (
-    documentSource?.includes(".mp4") ||
-    documentSource?.includes("youtube.com")
-  ) {
+  if (resource.url?.includes(".mp4") || resource.url?.includes("youtube.com")) {
     return <Video className="mr-2 size-5 shrink-0 text-red-500" />
   }
 
-  if (documentSource?.includes(".mp3") || documentSource?.includes(".wav")) {
+  if (resource.url?.includes(".mp3") || resource.url?.includes(".wav")) {
     return <FileAudio className="mr-2 size-5 shrink-0 text-green-500" />
   }
 
   const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 
-  if (imageExtensions.some((ext) => documentSource?.includes(ext))) {
+  if (imageExtensions.some((ext) => resource.url?.includes(ext))) {
     return <ImageIcon className="mr-2 size-5 shrink-0 text-blue-500" />
   }
 

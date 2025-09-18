@@ -60,9 +60,9 @@ export function formatDate(dateString: string): string | null | JSX.Element {
 }
 
 /**
- * Extracts the domain name from a URL
- * @param url URL from which to extract the domain
- * @returns Domain name without 'www.'
+ * Extrae el nombre de dominio de una URL
+ * @param url URL de la que extraer el dominio
+ * @returns Nombre de dominio sin 'www.'
  */
 export function getDomainFromUrl(url: string): string {
   try {
@@ -76,9 +76,9 @@ export function getDomainFromUrl(url: string): string {
 }
 
 /**
- * Gets the title of a web page through the API
- * @param url URL of the web page
- * @returns Page title or domain if it cannot be obtained
+ * Obtiene el título de una página web a través de la API
+ * @param url URL de la página web
+ * @returns Título de la página o el dominio si no se puede obtener
  */
 export async function fetchPageTitle(url: string): Promise<string> {
   try {

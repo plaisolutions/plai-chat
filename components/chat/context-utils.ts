@@ -19,7 +19,8 @@ export function getCookie(name: string): string | null {
   for (const cookie of cookies) {
     const [key, value] = cookie.split("=")
     if (key.trim() === name) {
-      return value
+      // Decode URL-encoded values (e.g., %20 -> space)
+      return value ? decodeURIComponent(value) : value
     }
   }
   return null

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { getDomainFromUrl, fetchPageTitle } from '@/lib/utils'
+import { useState, useEffect } from "react"
+import { getDomainFromUrl, fetchPageTitle } from "@/lib/utils"
 
 // Caché global para almacenar los títulos ya obtenidos
 // Esto persiste entre renderizaciones y componentes
@@ -28,7 +28,7 @@ export function usePageTitles(urls: string[], skipFetch: boolean = false) {
     const urlsToFetch: string[] = []
 
     // Primero, verificar cuáles ya están en caché
-    urls.forEach(url => {
+    urls.forEach((url) => {
       if (titleCache[url]) {
         // Si ya está en caché, usar ese valor
         initialTitles[url] = titleCache[url]
@@ -70,7 +70,7 @@ export function usePageTitles(urls: string[], skipFetch: boolean = false) {
         const results = await Promise.all(promises)
 
         // Actualizar el estado con los nuevos títulos
-        setTitles(prev => {
+        setTitles((prev) => {
           const newTitles = { ...prev }
           results.forEach(({ url, title }) => {
             newTitles[url] = title

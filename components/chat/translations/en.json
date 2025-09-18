@@ -15,8 +15,10 @@
   "no_resources_found": "No resources found",
   "source": "Source",
   "sources": "Sources",
+  "show_sources": "Show sources",
   "pages": "Pages",
   "page": "Page",
+  "segments": "segments",
   "not_available": "Not available",
   "resource_deleted": "Resource might be deleted",
   "view_resource": "View resource",
@@ -54,5 +56,7 @@
   "start_new_chat": "Start a new chat to begin",
   "try_adjusting_search": "Try adjusting your search",
   "no_threads_yet": "No conversations yet",
-  "no_threads_found": "No conversations found"
+  "no_threads_found": "No conversations found",
+
+  "ai_disclaimer": "You are interacting with an Artificial Intelligence, so the answers may not be 100% accurate. We recommend reviewing the information provided."
 }

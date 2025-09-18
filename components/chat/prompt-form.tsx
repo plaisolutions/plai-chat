@@ -2,9 +2,11 @@
 
 import * as React from "react"
 import { RxArrowUp, RxPlus, RxStop, RxGear } from "react-icons/rx"
+import { Plus } from "lucide-react"
 import Textarea from "react-textarea-autosize"
 
 import { useEnterSubmit } from "@/lib/hooks/use-enter-submit"
+import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard"
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Microphone } from "@/components/microphone"
@@ -19,6 +21,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import { Tool } from "@/types/tools"
 import { useTranslation } from "@/components/chat/translations/useTranslation"
+import { useChatSession } from "@/components/chat/context"
+import { createThread } from "@/components/chat/context-utils"
 
 const maxRows = 8
 
@@ -26,24 +30,35 @@ export interface PromptProps {
   onSubmit: (value: string, enabledTools?: string[]) => Promise<void>
   isLoading: boolean
   onStop: () => void
-  onCreateSession?: () => Promise<void>
   tools?: Tool[]
   agentId?: string
+  showNewChatButton?: boolean
 }
 
 export default function PromptFrom({
   onSubmit,
   isLoading,
-  onCreateSession,
   onStop,
   tools = [],
   agentId,
+  showNewChatButton = false,
 }: PromptProps) {
   const [input, setInput] = React.useState<string>()
+  // History stack for undo operations (most recent state first)
+  const [inputHistory, setInputHistory] = React.useState<
+    Array<{
+      text: string | undefined
+      selectionStart: number
+      selectionEnd: number
+    }>
+  >([])
+  // Maximum number of history states to keep
+  const MAX_HISTORY_SIZE = 50
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { t } = useTranslation()
-
+  const { setActiveThreadId } = useChatSession()
+  const { handlePasteAsPlainText } = useCopyToClipboard({ timeout: 2000 })
   // State to store selected tools
   const [selectedTools, setSelectedTools] = React.useState<string[]>([])
 
@@ -192,153 +207,269 @@ export default function PromptFrom({
     })
   }
 
+  const handleNewChatClick = async () => {
+    const response = await createThread()
+    if (response.thread) {
+      setActiveThreadId(response.thread.id)
+    }
+  }
+
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
     }
   }, [])
 
-  const getEnabledTools = () => {
-    return selectedTools
-  }
-
   return (
-    <form
-      className="flex flex-col overflow-hidden rounded-xl border bg-background"
-      onSubmit={async (e) => {
-        e.preventDefault()
-        if (!input?.trim()) {
-          return
-        }
-        setInput("")
-        await onSubmit(input, getEnabledTools())
-      }}
-      ref={formRef}
-    >
-      <div className="flex w-full flex-row items-start gap-2 p-4">
-        {onCreateSession && (
-          <div className="relative size-8">
-            <button
-              onClick={() => {
-                onCreateSession()
-              }}
-              className={cn(
-                buttonVariants({ size: "sm", variant: "outline" }),
-                "absolute size-8 rounded-full bg-background px-2",
-              )}
-            >
-              <RxPlus />
-              <span className="sr-only">{t("new_chat")}</span>
-            </button>
-          </div>
-        )}
+    <>
+      <form
+        className="flex flex-col overflow-hidden rounded-xl border bg-background"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          if (!input?.trim()) {
+            return
+          }
+          setInput("")
+          await onSubmit(input, selectedTools)
+        }}
+        ref={formRef}
+      >
+        <div className="flex w-full flex-row items-start gap-2 p-4">
+          {showNewChatButton && (
+            <div className="relative size-8">
+              <button
+                onClick={handleNewChatClick}
+                className={cn(
+                  buttonVariants({ size: "sm", variant: "outline" }),
+                  "absolute size-8 rounded-full bg-background px-2",
+                )}
+              >
+                <RxPlus />
+                <span className="sr-only">{t("new_chat")}</span>
+              </button>
+            </div>
+          )}
 
-        <div className="flex w-full items-start p-0">
-          <div className="w-full min-w-0 max-w-full flex-1">
-            <div className="text-token-text-primary default-browser flex overflow-visible">
-              <Textarea
-                ref={inputRef}
-                tabIndex={0}
-                onKeyDown={onKeyDown}
-                rows={1}
-                maxRows={maxRows}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={t("message_placeholder")}
-                spellCheck={false}
-                className={`w-full resize-none bg-transparent px-2 py-1.5 text-sm focus-within:outline-none`}
-              />
+          <div className="flex w-full items-start p-0">
+            <div className="w-full min-w-0 max-w-full flex-1">
+              <div className="text-token-text-primary default-browser flex overflow-visible">
+                <Textarea
+                  ref={inputRef}
+                  tabIndex={0}
+                  rows={1}
+                  maxRows={maxRows}
+                  value={input}
+                  onChange={(e) => {
+                    // Get the textarea element
+                    const textarea = e.currentTarget || inputRef.current
+                    if (textarea) {
+                      // Save current state to history stack
+                      const newState = {
+                        text: input === undefined ? "" : input,
+                        selectionStart: textarea.selectionStart || 0,
+                        selectionEnd: textarea.selectionEnd || 0,
+                      }
+
+                      setInputHistory((prevHistory) => {
+                        // Add new state to the beginning of the array
+                        const newHistory = [newState, ...prevHistory]
+                        // Limit history size
+                        return newHistory.slice(0, MAX_HISTORY_SIZE)
+                      })
+                    }
+
+                    // Update input value
+                    setInput(e.target.value)
+                  }}
+                  onKeyDown={(e) => {
+                    // Handle undo (Ctrl+Z or Cmd+Z)
+                    if (
+                      (e.ctrlKey || e.metaKey) &&
+                      e.key === "z" &&
+                      inputHistory.length > 0
+                    ) {
+                      e.preventDefault()
+
+                      // Get the most recent state from history
+                      const previousState = inputHistory[0]
+
+                      // Remove the used state from history
+                      setInputHistory((prevHistory) => prevHistory.slice(1))
+
+                      // Restore previous input state (explicitly handle empty string case)
+                      setInput(
+                        previousState.text === undefined
+                          ? ""
+                          : previousState.text,
+                      )
+
+                      // Restore cursor position after state update
+                      setTimeout(() => {
+                        if (inputRef.current) {
+                          inputRef.current.focus()
+                          inputRef.current.setSelectionRange(
+                            previousState.selectionStart,
+                            previousState.selectionEnd,
+                          )
+                        }
+                      }, 0)
+
+                      return
+                    }
+
+                    // Call the original onKeyDown handler from useEnterSubmit
+                    onKeyDown(e)
+                  }}
+                  onPaste={(e) => {
+                    // Prevent default paste behavior
+                    e.preventDefault()
+
+                    // Get the textarea element
+                    const textarea = e.currentTarget || inputRef.current
+                    if (!textarea) return
+
+                    // Get selection start and end positions
+                    const selectionStart = textarea.selectionStart ?? 0
+                    const selectionEnd = textarea.selectionEnd ?? selectionStart
+
+                    // Save current state to history stack
+                    const newState = {
+                      text: input === undefined ? "" : input,
+                      selectionStart,
+                      selectionEnd,
+                    }
+
+                    setInputHistory((prevHistory) => {
+                      // Add new state to the beginning of the array
+                      const newHistory = [newState, ...prevHistory]
+                      // Limit history size
+                      return newHistory.slice(0, MAX_HISTORY_SIZE)
+                    })
+
+                    // Get plain text from clipboard
+                    const plainText = handlePasteAsPlainText(e)
+
+                    // Update input with plain text, replacing any selected text
+                    setInput((prev) => {
+                      const prevText = prev || ""
+                      const textBefore = prevText.substring(0, selectionStart)
+                      const textAfter = prevText.substring(selectionEnd)
+                      return textBefore + plainText + textAfter
+                    })
+
+                    // Calculate new cursor position after the pasted text
+                    const newCursorPosition = selectionStart + plainText.length
+
+                    // Set cursor position after the paste operation is complete
+                    setTimeout(() => {
+                      if (textarea) {
+                        textarea.focus()
+                        textarea.setSelectionRange(
+                          newCursorPosition,
+                          newCursorPosition,
+                        )
+                      }
+                    }, 0)
+                  }}
+                  placeholder={t("message_placeholder")}
+                  spellCheck={false}
+                  className={`w-full resize-none bg-transparent px-2 py-1.5 text-sm focus-within:outline-none`}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {tools && tools.length > 0 && (
-          <div className="size-8 px-0">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  className={cn(
-                    buttonVariants({ size: "sm", variant: "secondary" }),
-                    "size-8 rounded-md p-0",
-                  )}
-                >
-                  <RxGear size="18px" />
-                  <span className="sr-only">{t("configure_tools")}</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-4">
-                  <p className="text-sm">{t("configure_tools")}</p>
-                  <Separator />
+          {tools && tools.length > 0 && (
+            <div className="size-8 px-0">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    className={cn(
+                      buttonVariants({ size: "sm", variant: "secondary" }),
+                      "size-8 rounded-md p-0",
+                    )}
+                  >
+                    <RxGear size="18px" />
+                    <span className="sr-only">{t("configure_tools")}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="space-y-4">
+                    <p className="text-sm">{t("configure_tools")}</p>
+                    <Separator />
 
-                  <ScrollArea className="h-[300px] max-h-40 pr-4">
-                    {filteredTools.length > 0 && (
-                      <div className="space-y-2">
+                    <ScrollArea className="h-[300px] max-h-40 pr-4">
+                      {filteredTools.length > 0 && (
                         <div className="space-y-2">
                           <div className="space-y-2">
-                            {filteredTools.map((tool) => (
-                              <div
-                                key={tool.id}
-                                className="flex items-center justify-between py-1"
-                              >
-                                <Label
-                                  htmlFor={`tool-${tool.id}`}
-                                  className="text-sm"
+                            <div className="space-y-2">
+                              {filteredTools.map((tool) => (
+                                <div
+                                  key={tool.id}
+                                  className="flex items-center justify-between py-1"
                                 >
-                                  {tool.name}
-                                </Label>
-                                <Switch
-                                  id={`tool-${tool.id}`}
-                                  checked={selectedTools.includes(tool.id)}
-                                  onCheckedChange={() =>
-                                    handleToolSelection(tool.id)
-                                  }
-                                />
-                              </div>
-                            ))}
+                                  <Label
+                                    htmlFor={`tool-${tool.id}`}
+                                    className="text-sm"
+                                  >
+                                    {tool.name}
+                                  </Label>
+                                  <Switch
+                                    id={`tool-${tool.id}`}
+                                    checked={selectedTools.includes(tool.id)}
+                                    onCheckedChange={() =>
+                                      handleToolSelection(tool.id)
+                                    }
+                                  />
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </ScrollArea>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        )}
-
-        <div className="size-8 px-0">
-          <Microphone setInputText={setInput} />
-        </div>
-
-        <div className="size-8 px-0">
-          {isLoading ? (
-            <Button
-              type="button"
-              onClick={onStop}
-              className={cn(
-                buttonVariants({ size: "sm", variant: "secondary" }),
-                "size-8 rounded-md p-0",
-              )}
-            >
-              <RxStop size="18px" />
-              <span className="sr-only">{t("stop_generation")}</span>
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              className={cn(
-                buttonVariants({ size: "sm", variant: "secondary" }),
-                "size-8 rounded-md p-0",
-              )}
-            >
-              <RxArrowUp size="18px" />
-              <span className="sr-only">{t("send_message")}</span>
-            </Button>
+                      )}
+                    </ScrollArea>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           )}
+
+          <div className="size-8 px-0">
+            <Microphone setInputText={setInput} />
+          </div>
+
+          <div className="size-8 px-0">
+            {isLoading ? (
+              <Button
+                type="button"
+                onClick={onStop}
+                className={cn(
+                  buttonVariants({ size: "sm", variant: "secondary" }),
+                  "size-8 rounded-md p-0",
+                )}
+              >
+                <RxStop size="18px" />
+                <span className="sr-only">{t("stop_generation")}</span>
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                className={cn(
+                  buttonVariants({ size: "sm", variant: "secondary" }),
+                  "size-8 rounded-md p-0",
+                )}
+              >
+                <RxArrowUp size="18px" />
+                <span className="sr-only">{t("send_message")}</span>
+              </Button>
+            )}
+          </div>
         </div>
+        <div className="hidden h-2 w-full bg-background"></div>
+      </form>
+      <div id="disclaimer" className="py-2 text-center md:mx-auto md:max-w-2xl">
+        <p className="text-xs">{t("ai_disclaimer")}</p>
       </div>
-      <div className="hidden h-2 w-full bg-background"></div>
-    </form>
+    </>
   )
 }

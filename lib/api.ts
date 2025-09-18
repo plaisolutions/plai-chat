@@ -32,6 +32,11 @@ import type {
   ResourceCreate,
   ResourceUpdate,
 } from "@/types/datasources"
+import type {
+  FolderWithChildren,
+  FolderCreate,
+  FolderUpdate,
+} from "@/types/folders"
 import type { Tool, ToolCreate, ToolUpdate } from "@/types/tools"
 import type { Batch } from "@/types/batches"
 import type {
@@ -373,9 +378,6 @@ export class Api {
   }
 
   async getAgent(agentId: string) {
-    console.log("GETTING AGENT", agentId)
-    console.log("PROJECT TOKEN", this.projectToken)
-
     return this.fetchFromApi<Agent>(`/agents/${agentId}`, {
       headers: {
         authorization: `Bearer ${this.projectToken}`,
@@ -590,7 +592,55 @@ export class Api {
     })
   }
 
-  async getResources(datasourceId: string) {
+  async getDatasourceFolders(id: string) {
+    return this.fetchFromApi<FolderWithChildren[]>(
+      `/datasources/${id}/folders`,
+      {
+        headers: {
+          authorization: `Bearer ${this.projectToken}`,
+        },
+      },
+    )
+  }
+
+  async getFolder(datasourceId: string, id: string) {
+    return this.fetchFromApi<FolderWithChildren>(
+      `/datasources/${datasourceId}/folders/${id}`,
+      {
+        headers: {
+          authorization: `Bearer ${this.projectToken}`,
+        },
+      },
+    )
+  }
+
+  async createFolder(payload: FolderCreate) {
+    return this.fetchFromApi<FolderWithChildren>(
+      `/datasources/${payload.datasource_id}/folders`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: {
+          authorization: `Bearer ${this.projectToken}`,
+        },
+      },
+    )
+  }
+
+  async patchFolder(payload: FolderUpdate) {
+    return this.fetchFromApi<FolderWithChildren>(
+      `/datasources/${payload.datasource_id}/folders/${payload.id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      },
+    )
+  }
+
+  async getResources(
+    datasourceId: string,
+    searchParams: { page?: number; take?: number; folder_id?: string } = {},
+  ) {
     return this.fetchFromApi<ResourceListResponse>(
       `/datasources/${datasourceId}/resources`,
       {
@@ -598,6 +648,7 @@ export class Api {
           authorization: `Bearer ${this.projectToken}`,
         },
       },
+      searchParams,
     )
   }
 

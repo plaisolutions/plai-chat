@@ -206,7 +206,7 @@ function DatasourceCard({
           className="mb-4 flex flex-col gap-2 rounded-md border border-gray-200 p-4"
         >
           <div className="flex items-center gap-2">
-            {getDocumentIcon({ source: doc.source })}
+            {getDocumentIcon(resource)}
             <p className="text-sm font-medium">{displayName}</p>
           </div>
           <div className="flex flex-wrap gap-1">

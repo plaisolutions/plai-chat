@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
-import { Database, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Database, ChevronLeft, ChevronRight, X, File } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { TruncatedText } from "@/components/truncated-text"
@@ -9,6 +9,7 @@ import { getDocumentIcon } from "@/components/chat/utils"
 import { useChatSession } from "@/components/chat/context"
 import { getThread } from "@/components/chat/context-utils"
 import { getResourceFromChatSession } from "@/components/chat/utils"
+import { Icons } from "@/components/icons"
 
 interface DocumentCitationProps {
   ids: string[]
@@ -260,10 +261,13 @@ export function DocumentCitation({ ids, className }: DocumentCitationProps) {
             <div className="space-y-3">
               <div className="rounded-md border border-gray-200 bg-stone-50 p-3">
                 <div className="mb-2 flex items-center gap-2">
-                  {getDocumentIcon({
-                    source: currentResource.external_url || "",
-                    type: currentResource.type,
-                  })}
+                  {currentResource.type === "pdf" ? (
+                    <Icons.pdf className="mr-1 size-5 shrink-0 fill-red-500" />
+                  ) : currentResource.type === "txt" ? (
+                    <File className="mr-2 size-5 shrink-0 text-blue-500" />
+                  ) : (
+                    <Database className="mr-2 size-5 shrink-0 text-gray-500" />
+                  )}
                   <h4 className="text-xs font-medium leading-tight">
                     {currentResource.name}
                   </h4>

@@ -15,8 +15,10 @@
   "no_resources_found": "No se encontraron recursos",
   "source": "Fuente",
   "sources": "Fuentes",
+  "show_sources": "Mostrar fuentes",
   "pages": "Páginas",
   "page": "Página",
+  "segments": "segmentos",
   "not_available": "No disponible",
   "resource_deleted": "El recurso podría haber sido eliminado",
   "view_resource": "Ver recurso",
@@ -50,9 +52,11 @@
   "stop_generation": "Detener generación",
 
   "search_conversations": "Buscar conversaciones...",
-  
+
   "start_new_chat": "Start a new chat to begin",
   "try_adjusting_search": "Try adjusting your search",
   "no_threads_yet": "No conversations yet",
-  "no_threads_found": "No conversations found"
+  "no_threads_found": "No conversations found",
+
+  "ai_disclaimer": "Estás interactuando con una Inteligencia Artificial, por lo que las respuestas pueden no ser 100% precisas. Te recomendamos revisar la información proporcionada."
 }

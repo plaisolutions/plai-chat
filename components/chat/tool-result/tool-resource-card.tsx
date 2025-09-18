@@ -13,14 +13,17 @@ export function ToolResultCard({
   toolResult: ChatMessage["tool_result"]
 }): React.ReactElement | null {
   const { t } = useTranslation()
-  
+
   if (toolResult?.type === "datasource") {
     return <DatasourceToolResult toolResult={toolResult} />
   }
 
   if (toolResult?.type === "perplexity") {
     return (
-      <ToolResultSheet title={t("tool_result_perplexity")} icon={<Search className="size-5" />}>
+      <ToolResultSheet
+        title={t("tool_result_perplexity")}
+        icon={<Search className="size-5" />}
+      >
         <PerplexityCard toolResult={toolResult} />
       </ToolResultSheet>
     )

@@ -21,20 +21,23 @@ import {
 import { useChatSession } from "@/components/chat/context"
 
 import type { ChatMessage } from "@/components/chat/types"
-import type { Tool } from "@/types/tools"
 
 dayjs.extend(relativeTime)
 
 interface ChatProps {
-  tools?: Tool[]
   debug?: boolean
   collapsed?: boolean
+  showToolsControl?: boolean
+  showNewChatButton?: boolean
+  autoScroll?: boolean
 }
 
 export default function Chat({
-  tools = [],
   debug = false,
   collapsed = false,
+  showToolsControl = false,
+  showNewChatButton = false,
+  autoScroll = true,
 }: ChatProps) {
   const [isStreaming, setIsStreaming] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -63,8 +66,10 @@ export default function Chat({
   }, [activeThreadId])
 
   useEffect(() => {
-    scrollToMessagesBottom()
-  }, [messages])
+    if (autoScroll) {
+      scrollToMessagesBottom()
+    }
+  }, [messages, autoScroll])
 
   const abortStream = () => {
     if (abortControllerRef.current) {
@@ -235,7 +240,7 @@ export default function Chat({
         </div>
       )}
       <div className="relative flex grow flex-col px-4">
-        <div className="mb-20 mt-10 flex flex-col space-y-5 py-5">
+        <div className="mb-32 mt-10 flex flex-col space-y-5 py-5">
           <div className="container mx-auto flex max-w-4xl flex-col">
             {messages &&
               messages.map((message, index) => {
@@ -271,16 +276,37 @@ export default function Chat({
                   }
                 }
 
-                const isToolResult = false
+                const isToolResult = message.role === "tool"
 
                 if (isToolResult && message.tool_result) {
                   return (
                     <div key={index} className="mb-3">
                       <ToolResultCard toolResult={message.tool_result} />
-                      {/* <ToolResult toolResult={message.tool_result} /> */}
                     </div>
                   )
                 }
+
+                // Find the corresponding tool result for assistant messages
+                // Look for the LAST tool result that comes before this assistant message
+                const correspondingToolResult =
+                  message.role === "assistant"
+                    ? (() => {
+                        // Find all tool results before this message
+                        const toolResults = messages
+                          .slice(0, index)
+                          .filter(
+                            (msg) =>
+                              msg.role === "tool" &&
+                              msg.tool_result?.type === "datasource",
+                          )
+                          .map((msg) => msg.tool_result)
+
+                        // Return the last one (most recent)
+                        return toolResults.length > 0
+                          ? toolResults[toolResults.length - 1]
+                          : null
+                      })()
+                    : null
 
                 return (
                   <Message
@@ -289,6 +315,8 @@ export default function Chat({
                     onResubmit={onResubmit}
                     agentId={chatSession.agent.id}
                     showAvatar={displayAvatar}
+                    correspondingToolResult={correspondingToolResult}
+                    isStreaming={isStreaming}
                     {...message}
                   />
                 )
@@ -308,8 +336,9 @@ export default function Chat({
               onSubmit(value, enabledTools)
             }}
             isLoading={isStreaming}
-            tools={tools}
+            tools={showToolsControl ? chatSession.agent.tools : []}
             agentId={chatSession.agent.id}
+            showNewChatButton={showNewChatButton}
           />
         </div>
       </div>

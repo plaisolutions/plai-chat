@@ -102,6 +102,7 @@ export type Resource = {
     | "SCRAPING"
     | "DONE"
     | "FAILED"
+  folder_id: string | null
   created_at: string
   updated_at: string
 }
@@ -236,10 +237,11 @@ export const resourceUpdateSchema = z.object({
 export type ResourceUpdate = z.infer<typeof resourceUpdateSchema>
 
 export interface ResourceListResponse {
-  data: Resource[]
-  has_more: boolean
-  next: string
-  previous: string
+  count: number
+  page: number
+  next: string | null
+  previous: string | null
+  results: Resource[]
 }
 
 export const resourceDeleteSchema = z.object({

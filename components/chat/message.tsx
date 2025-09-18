@@ -11,12 +11,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { CustomMarkdown } from "@/components/custom-markdown"
 import { ToolResultCard } from "@/components/chat/tool-result/tool-resource-card"
+import { ShowSourcesButton } from "@/components/chat/show-sources-button"
 import { getCookie } from "@/components/chat/context-utils"
 import type { ChatMessage } from "@/components/chat/types"
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard"
 
 export default function Message(
-  message: ChatMessage & { agentId: string; showAvatar: boolean },
+  message: ChatMessage & {
+    agentId: string
+    showAvatar: boolean
+    correspondingToolResult?: ChatMessage["tool_result"]
+    isStreaming?: boolean
+  },
 ) {
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 })
   const markdownRef = useRef<HTMLDivElement>(null)
@@ -99,6 +105,16 @@ export default function Message(
                 />
               </div>
             )}
+            {/* Show ShowSourcesButton after assistant message content only when not streaming */}
+            {message.role === "assistant" &&
+              message.correspondingToolResult &&
+              !message.isStreaming && (
+                <div className="mt-4">
+                  <ShowSourcesButton
+                    toolResult={message.correspondingToolResult}
+                  />
+                </div>
+              )}
             {message.role === "assistant" && message.content.length > 0 && (
               <div className="mt-8 flex space-x-2">
                 {message.id && (

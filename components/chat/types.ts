@@ -1,5 +1,6 @@
 import type { User } from "@/types/users"
 import type { Agent } from "@/types/agents"
+import type { Tool } from "@/types/tools"
 
 export type ChatMessage = {
   id?: string
@@ -40,7 +41,7 @@ type ToolCallType =
 
 export interface ChatSession {
   id: string
-  agent: Agent
+  agent: Agent & { tools: Tool[] }
   thread: Thread
   external_ref: string
   allowed_vectors: Record<string, AllowedVector>
@@ -66,3 +67,13 @@ export type Thread = {
 }
 
 type AllowedVector = Record<string, string[]>
+
+export type Folder = {
+  id: string
+  name: string
+  datasource_id: string
+  parant_id: string | null
+  children: Folder[]
+  created_at: string
+  updated_at: string
+}
